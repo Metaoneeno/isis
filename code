@@ -1,0 +1,136 @@
+using System;
+using System.Linq;
+using System.Xml.Linq;
+using System.Xml.XPath;
+
+
+namespace Лабораторная_работа_2
+{
+    class Cars
+    {
+        static void Main(string[] args)
+        {
+            Console.Title = "Выполнение запросов LINQ to XML";
+            XDocument xmlDoc = XDocument.Load("cars.xml");
+            Console.WriteLine("Результат выполнения запросов:");
+
+            ModelsAndPrice(xmlDoc);
+            AveragePrice(xmlDoc);
+            EngineDate(xmlDoc);
+            StaffList(xmlDoc);
+            EnginePower(xmlDoc);
+            Console.ReadLine();
+        }
+
+        static void ModelsAndPrice(XDocument doc)
+        {
+            var result = from cars in doc.Descendants("автомобиль")
+                         where cars.Attribute("фирма").Value == "ФИРМА"
+                         select cars;
+
+            Console.WriteLine("\n\n1. Модели и цены автомобилей фирмы 'ФИРМА':");
+            foreach (var r in result)
+            {
+                Console.WriteLine("|{0,15}{1,10}|{2,15}{3,10}|", r.Attribute("модель").Value, "",
+                r.Attribute("цена").Value, "");
+            }
+        }
+
+        static void AveragePrice(XDocument doc)
+        {
+            Console.WriteLine("\n\n2. Средняя цена автомобилей с кузовом 'седан':");
+            var result = from cars in doc.Descendants("автомобиль")
+                         from c1 in cars.Attributes("цена")
+                         where cars.Attribute("кузов").Value == "седан"
+                         select cars;
+            double sum = 0;
+            double cont = 0;
+            foreach (var e in result)
+            {
+                sum += Convert.ToDouble(e.Attribute("цена").Value);
+                cont++;
+            }
+            sum = sum / cont;
+            Console.WriteLine(sum);
+
+
+        }
+
+        static void EngineDate(XDocument doc)
+        {
+            var groups = from c in doc.Descendants("автомобиль")
+                         from Сars in c.Elements("двигатель")
+                         where (int)Сars.Attribute("мощность") > 150
+                         group c by c.Attribute("фирма").Value;
+
+            Console.WriteLine("\n\n3. Данные по автомобилям мощностью более 150 л.с., сгруппированные по фирмам: ");
+            foreach (var group in groups)
+            {
+                Console.WriteLine("\nмашины" + group.Key);
+                foreach (var elem in group)
+                {
+                    Console.WriteLine("- {0}, {1}, {2}", elem.Attribute("модель").Value, elem.Attribute("цена").Value, elem.Attribute("кузов").Value);
+                }
+            }
+        }
+
+        static void StaffList(XDocument doc)
+
+        {
+            XElement staff = new XElement("ответственные_сотрудники",
+                        new XElement("ответственный_сотрудник",
+                            new XElement("фио", "Марков Ярослав Евгеньевич"),
+                            new XElement("автомобиль", "Audi")
+                        ),
+                        new XElement("ответственный_сотрудник",
+                            new XElement("фио", "Костенко Сергей Петрович"),
+                            new XElement("автомобиль", "HAVAL")
+                        ),
+                        new XElement("ответственный_сотрудник",
+                            new XElement("фио", "Петров Александр Юрьевич"),
+                            new XElement("автомобиль", "Audi TT")
+                        ),
+                        new XElement("ответственный_сотрудник",
+                            new XElement("фио", "Зубенко Михаил Петрович"),
+                            new XElement("автомобиль", "BMW")
+                        ),
+                        new XElement("ответственный_сотрудник",
+                            new XElement("фио", "Антонов Алексей Олегович"),
+                            new XElement("автомобиль", "Mersedes")
+                        ),
+                        new XElement("ответственный_сотрудник",
+                            new XElement("фио", "Сергеев Андриан Всеволодович"),
+                            new XElement("автомобиль", "Skoda")
+                        )
+            );
+
+            var result = from cars in doc.Descendants("автомобиль")
+                         join p in staff.Elements("ответственный_сотрудник")
+                           on cars.Attribute("модель").Value equals p.Element("автомобиль").Value
+                         select new
+                         {
+                             staff = p.Element("фио").Value,
+                             model = cars.Attribute("модель").Value
+                         };
+
+            Console.WriteLine("\n4. Список пассажиров с указанием рейса:\n");
+            foreach (var r in result)
+            {
+                Console.WriteLine("|{0, 40}|{1, 25}|", r.staff, r.model);
+            }
+        }
+
+        static void EnginePower(XDocument doc)
+        {
+            var addresses = doc.XPathSelectElements("//автомобиль[двигатель/@мощность > 130]");
+            foreach ( var i in addresses)
+            {
+                var Add = i.Attribute("модель");
+                Console.Write("-{0} \n", Add);
+            }
+        }
+    }
+}
+
+
+
